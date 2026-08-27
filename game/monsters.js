@@ -103,7 +103,7 @@ export class HellHound {
   }
 
   get hitbox() {
-    return { x: this.x - 22, y: this.y - 24, w: 44, h: 24 };
+    return { x: this.x - 28, y: this.y - 36, w: 56, h: 36 };
   }
 
   takeDamage(amount) {

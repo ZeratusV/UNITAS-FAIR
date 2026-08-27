@@ -38,6 +38,7 @@ export class Dragon {
     this.contactShakeTimer = 0;
     this.fireResolved = false;
     this.summonSpawned = false;
+    this.breathFacesRight = false;
     this.vx = 0;
     this.vy = 0;
     this.randomizeDirection();
@@ -95,7 +96,7 @@ export class Dragon {
     this.randomizeDirection();
   }
 
-  decideAction() {
+  decideAction(player) {
     const canFire = this.fireCooldown <= 0;
     const canSummon = this.summonCooldown <= 0;
     let choice = null;
@@ -107,10 +108,11 @@ export class Dragon {
       this.state = 'FIRE_TELEGRAPH';
       this.stateTimer = 0;
       this.fireResolved = false;
-      // The breath animation always blows toward the left, so the zone
-      // sits left of the dragon's current position - clamped to stay on
-      // screen regardless of where in the (now much wider) range it is.
-      const rawX = this.x - 620;
+      // Always aim toward wherever the player actually is (frozen at the
+      // moment the attack is declared, same as the AOE zone itself, so the
+      // telegraph stays an honest preview of where the damage will land).
+      this.breathFacesRight = player.x >= this.x;
+      const rawX = this.breathFacesRight ? this.x + 120 : this.x - 620;
       this.aoeZone = { x: Math.max(0, Math.min(CANVAS_W - AOE_ZONE_WIDTH, rawX)), y: 350, w: AOE_ZONE_WIDTH, h: 190 };
     } else if (choice === 'SUMMON') {
       this.state = 'SUMMON';
@@ -155,7 +157,7 @@ export class Dragon {
 
     switch (this.state) {
       case 'IDLE':
-        if (this.stateTimer >= this.idleDecisionTime) this.decideAction();
+        if (this.stateTimer >= this.idleDecisionTime) this.decideAction(player);
         break;
 
       case 'FIRE_TELEGRAPH':
@@ -216,7 +218,7 @@ export class Dragon {
     if (this.state === 'FIRE_TELEGRAPH') {
       // Soft pulsing glow near the mouth as a warning cue, instead of a hard AOE rectangle.
       const pulse = 0.35 + 0.35 * Math.sin(this.stateTimer / 60);
-      const gx = this.x - 90, gy = this.y + 30;
+      const gx = this.breathFacesRight ? this.x + 90 : this.x - 90, gy = this.y + 30;
       const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, 90);
       grad.addColorStop(0, `rgba(90,220,230,${pulse})`);
       grad.addColorStop(1, 'rgba(90,220,230,0)');
@@ -228,31 +230,34 @@ export class Dragon {
       ctx.restore();
     }
 
-    let img, def, frameIndex, scale, xOffset;
+    let img, def, frameIndex, scale;
     if (this.state === 'FIRE_TELEGRAPH') {
       def = ANIMS.dragonBreath;
       img = IMAGES.dragonBreath;
       frameIndex = Math.min(5, Math.floor(this.stateTimer / 100));
       scale = DRAGON_BREATH_SCALE;
-      xOffset = DRAGON_BREATH_X_OFFSET * scale;
     } else if (this.state === 'FIRE_ACTIVE') {
       def = ANIMS.dragonBreath;
       img = IMAGES.dragonBreath;
       frameIndex = 6 + Math.min(9, Math.floor(this.stateTimer / 90));
       scale = DRAGON_BREATH_SCALE;
-      xOffset = DRAGON_BREATH_X_OFFSET * scale;
     } else {
       def = ANIMS.dragonIdle;
       img = IMAGES.dragonIdle;
       frameIndex = this.anims.idle.frameIndex;
       scale = DRAGON_SCALE;
-      xOffset = 0;
     }
+
+    const flip = attacking ? this.breathFacesRight : this.vx > 0;
+    // The demon's body sits off-center within the (wider) breath frame, so
+    // keeping it visually anchored to this.x means shifting the draw
+    // position - and mirroring flips which way that shift needs to go.
+    const baseXOffset = attacking ? DRAGON_BREATH_X_OFFSET * scale : 0;
+    const xOffset = flip ? -baseXOffset : baseXOffset;
 
     const dw = def.frameW * scale, dh = def.frameH * scale;
     const dx = this.x - dw / 2 + xOffset + shakeX;
     const dy = this.y - dh / 2;
-    const flip = !attacking && this.vx > 0;
 
     let alpha = 1;
     if (this.teleportTimer > 0) {

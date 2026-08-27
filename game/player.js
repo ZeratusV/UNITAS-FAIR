@@ -48,9 +48,15 @@ export class Player {
 
   get attackHitbox() {
     if (this.attackTimer < ATTACK_HITBOX_START || this.attackTimer > ATTACK_HITBOX_END) return null;
-    const w = 64, h = 60;
-    const x = this.facing === 1 ? this.x + PLAYER_W / 2 : this.x - PLAYER_W / 2 - w;
-    const y = this.y - h - 10;
+    // Centered on the player rather than only extending in the facing
+    // direction - a fast ground enemy circling around (e.g. the hell
+    // hound) could end up "behind" a directional hitbox and make the
+    // swing whiff even though it visually looked adjacent. Reaches down
+    // to the player's own feet level so low, ground-hugging targets are
+    // reliably caught too.
+    const w = 100, h = 70;
+    const x = this.x - w / 2;
+    const y = this.y - h;
     return { x, y, w, h };
   }
 
