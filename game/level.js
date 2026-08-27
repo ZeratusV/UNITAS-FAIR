@@ -1,20 +1,23 @@
-const CANVAS_W = 1280; // widened from 960 for a roomier arena
-const CANVAS_H = 540;
-const SCALE = 2;
-const GROUND_TOP = 412; // unchanged from the original tuned layout, so jump height / platform reachability / dragon hurtbox overlap all still line up exactly
+import { IMAGES } from './assets';
+import { drawParticles } from './particles';
+
+export const CANVAS_W = 1280;
+export const CANVAS_H = 540;
+export const SCALE = 2;
+export const GROUND_TOP = 412; // tuned layout: jump height / platform reachability / dragon hurtbox overlap all line up against this value
 
 // Source rects sampled directly from platformer-tileset.png (exact bounding
 // boxes found via connected-component analysis on the sheet).
-const TILE_SRC = { sx: 224, sy: 64, sw: 32, sh: 32 }; // tan dirt/grass ground block
-const PLATFORM_SRC = { sx: 304, sy: 64, sw: 32, sh: 32 }; // maroon block, deliberately different from the ground so platforms read as distinct
+export const TILE_SRC = { sx: 224, sy: 64, sw: 32, sh: 32 }; // tan dirt/grass ground block
+export const PLATFORM_SRC = { sx: 304, sy: 64, sw: 32, sh: 32 }; // maroon block, deliberately different from the ground so platforms read as distinct
 
-const PLATFORMS = [
+export const PLATFORMS = [
   { x: 160, width: 192, top: 300 }, // Platform A, near player spawn
   { x: 520, width: 160, top: 340 }, // Platform C, a mid-arena stepping stone across the wider gap
-  { x: 900, width: 192, top: 280 }, // Platform B, near the dragon's patrol range, primary fire-dodge spot
+  { x: 900, width: 192, top: 280 }, // Platform B, near the dragon's usual patrol range, primary fire-dodge spot
 ];
 
-function drawLevel(ctx) {
+export function drawLevel(ctx) {
   const bg = IMAGES.castleBackground;
   if (bg && bg.complete && bg.naturalWidth > 0) {
     const scale = Math.max(CANVAS_W / bg.naturalWidth, CANVAS_H / bg.naturalHeight);

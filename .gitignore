@@ -1,4 +1,11 @@
 # Large third-party licensed/purchased asset pack - not ours to redistribute.
 # Only the specific sprites Dragon Duel actually uses are copied out (with
-# clean filenames) into dragon-duel/assets/, which IS tracked.
+# clean filenames) into public/assets/, which IS tracked.
 Legacy Collection/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.env*.local

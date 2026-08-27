@@ -1,5 +1,7 @@
 // Purely decorative ambient particles (embers + cyan sparks) so the
 // background isn't a flat, static image. Runs behind gameplay entities.
+import { CANVAS_W, CANVAS_H } from './level';
+
 const PARTICLE_COUNT = 35; // scaled up a bit for the wider arena
 
 const PARTICLE_COLORS = [
@@ -23,16 +25,24 @@ function makeParticle() {
   };
 }
 
-const particles = [];
-for (let i = 0; i < PARTICLE_COUNT; i++) {
-  const p = makeParticle();
-  p.baseX = p.x;
-  particles.push(p);
+// Populated lazily via initParticles() (called once by the engine at
+// startup) rather than at module-evaluation time, since level.js and
+// particles.js import each other and module-top-level access to a
+// circularly-imported binding is fragile to evaluation order.
+export const particles = [];
+
+export function initParticles() {
+  particles.length = 0;
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const p = makeParticle();
+    p.baseX = p.x;
+    particles.push(p);
+  }
 }
 
 let particleTime = 0;
 
-function updateParticles(dt) {
+export function updateParticles(dt) {
   particleTime += dt;
   for (const p of particles) {
     p.y -= p.speed * dt;
@@ -44,7 +54,7 @@ function updateParticles(dt) {
   }
 }
 
-function drawParticles(ctx) {
+export function drawParticles(ctx) {
   ctx.save();
   for (const p of particles) {
     const flicker = 0.75 + 0.25 * Math.sin(particleTime * 3 + p.phase);

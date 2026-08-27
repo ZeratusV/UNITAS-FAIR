@@ -1,3 +1,6 @@
+import { Anim, ANIMS, IMAGES, drawFrame, randRange, rectsOverlap } from './assets';
+import { CANVAS_W, GROUND_TOP, SCALE } from './level';
+
 const MONSTER_MAX_HP = 20;
 const MONSTER_CONTACT_DAMAGE_MIN = 5;
 const MONSTER_CONTACT_COOLDOWN = 700;
@@ -9,7 +12,7 @@ function monsterContactDamage() {
   return MONSTER_CONTACT_DAMAGE_MIN + Math.floor(Math.random() * 6); // 5-10
 }
 
-class FlyingDemon {
+export class FlyingDemon {
   constructor(spawnFromLeft) {
     this.x = spawnFromLeft ? -40 : CANVAS_W + 40;
     this.y = randRange(80, 150);
@@ -84,7 +87,7 @@ class FlyingDemon {
   }
 }
 
-class HellHound {
+export class HellHound {
   constructor(spawnFromLeft) {
     this.x = spawnFromLeft ? -40 : CANVAS_W + 40;
     this.y = GROUND_TOP;

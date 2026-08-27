@@ -1,9 +1,17 @@
-const DRAGON_MAX_HP = 100;
+import { Anim, ANIMS, IMAGES, drawFrameWithFlash, randRange, rollDamage, rectsOverlap } from './assets';
+import { CANVAS_W, GROUND_TOP } from './level';
+
+export const DRAGON_MAX_HP = 100;
 const DRAGON_SCALE = 1.3; // independent of the global tile/character SCALE - this sprite has a lot of padding
 const DRAGON_BREATH_SCALE = 1.8; // breath frames drawn much bigger so the flame art itself reads as the danger zone
 const DRAGON_BREATH_X_OFFSET = -27.5; // the demon's body sits off-center within the breath sheet's wider frame; this keeps it visually anchored vs the idle sprite
-const DRAGON_MIN_X = 820;
+
+// Wide enough that a teleport can genuinely relocate the dragon from one
+// side of the arena to the other (near Platform A on the left, to near the
+// right edge) rather than just bouncing within a small local slice.
+const DRAGON_MIN_X = 220;
 const DRAGON_MAX_X = 1160;
+
 const DRAGON_HOVER_Y = 250; // baseline center y while flying
 const DRAGON_BOB_AMPLITUDE = 10;
 const DRAGON_BOB_SPEED = 2.2;
@@ -14,11 +22,12 @@ const DRAGON_CONTACT_COOLDOWN = 700;
 const DRAGON_TELEPORT_DURATION = 240; // ms, blink-away triggered on every hit taken
 const DRAGON_TELEPORT_MIN_DISTANCE = 150;
 const DRAGON_TELEPORT_JITTER = 40; // px, avoids teleporting to the exact same spot every time
+const AOE_ZONE_WIDTH = 500;
 
-class Dragon {
+export class Dragon {
   constructor() {
     this.hp = DRAGON_MAX_HP;
-    this.x = (DRAGON_MIN_X + DRAGON_MAX_X) / 2;
+    this.x = DRAGON_MAX_X - 60; // starts on the right side of the arena
     this.state = 'IDLE';
     this.stateTimer = 0;
     this.idleDecisionTime = randRange(3000, 5000);
@@ -29,7 +38,7 @@ class Dragon {
     this.contactShakeTimer = 0;
     this.fireResolved = false;
     this.summonSpawned = false;
-    this.patrolDir = 1;
+    this.patrolDir = -1;
     this.bobPhase = Math.random() * Math.PI * 2;
     this.aoeZone = null;
     this.teleportTimer = 0;
@@ -54,9 +63,10 @@ class Dragon {
     this.teleportMoved = false;
     // Teleport to whichever end of the patrol range is farthest from the
     // player (a point-to-interval distance is always maximized at an
-    // endpoint), with a little jitter so it's not the exact same spot
-    // every time. Falls back to the opposite end if that's too close to
-    // where the dragon already is (e.g. it's already sitting at that end).
+    // endpoint) - i.e. all the way across the arena, not just a nearby
+    // spot - with a little jitter so it's not the exact same spot every
+    // time. Falls back to the opposite end if that's too close to where
+    // the dragon already is (e.g. it's already sitting at that end).
     const distToMin = Math.abs(DRAGON_MIN_X - playerX);
     const distToMax = Math.abs(DRAGON_MAX_X - playerX);
     let farEnd = distToMax >= distToMin ? DRAGON_MAX_X : DRAGON_MIN_X;
@@ -87,10 +97,11 @@ class Dragon {
       this.state = 'FIRE_TELEGRAPH';
       this.stateTimer = 0;
       this.fireResolved = false;
-      // The breath animation always blows toward the left (toward the
-      // player's side of the arena), so freeze the zone relative to
-      // wherever the dragon currently is patrolling.
-      this.aoeZone = { x: this.x - 620, y: 350, w: 500, h: 190 };
+      // The breath animation always blows toward the left, so the zone
+      // sits left of the dragon's current position - clamped to stay on
+      // screen regardless of where in the (now much wider) range it is.
+      const rawX = this.x - 620;
+      this.aoeZone = { x: Math.max(0, Math.min(CANVAS_W - AOE_ZONE_WIDTH, rawX)), y: 350, w: AOE_ZONE_WIDTH, h: 190 };
     } else if (choice === 'SUMMON') {
       this.state = 'SUMMON';
       this.stateTimer = 0;

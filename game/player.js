@@ -1,3 +1,7 @@
+import { Anim, ANIMS, IMAGES, drawFrame } from './assets';
+import { Input, consumePressed } from './input';
+import { CANVAS_W, GROUND_TOP, PLATFORMS, SCALE } from './level';
+
 const PLAYER_W = 40;
 const PLAYER_H = 78;
 const GRAVITY = 1700;
@@ -10,10 +14,10 @@ const ATTACK_HITBOX_START = 140; // frame index 2
 const ATTACK_HITBOX_END = 280; // through frame index 3
 
 const IFRAME_MS = 800;
-const MAX_HP = 50;
+export const MAX_HP = 50;
 const POTION_HEAL = 20;
 
-class Player {
+export class Player {
   constructor(x, y) {
     this.x = x; // center x
     this.y = y; // feet y

@@ -1,22 +1,22 @@
-const IMAGES = {};
+export const IMAGES = {};
 
-const IMAGE_MANIFEST = {
-  playerIdle: 'assets/images/player/idle.png',
-  playerRun: 'assets/images/player/run.png',
-  playerJump: 'assets/images/player/jump.png',
-  playerSwordSlash: 'assets/images/player/sword-slash.png',
-  playerHurt: 'assets/images/player/hurt.png',
-  dragonIdle: 'assets/images/dragon/idle.png',
-  dragonBreath: 'assets/images/dragon/breath.png',
-  flyingDemon: 'assets/images/flying-demon/spritesheet.png',
-  hellHoundWalk: 'assets/images/hell-hound/walk.png',
-  castleBackground: 'assets/images/tileset/castle-background.png',
-  platformerTileset: 'assets/images/tileset/platformer-tileset.png',
-  itecLogo: 'assets/images/ui/itec-logo.png',
+export const IMAGE_MANIFEST = {
+  playerIdle: '/assets/player/idle.png',
+  playerRun: '/assets/player/run.png',
+  playerJump: '/assets/player/jump.png',
+  playerSwordSlash: '/assets/player/sword-slash.png',
+  playerHurt: '/assets/player/hurt.png',
+  dragonIdle: '/assets/dragon/idle.png',
+  dragonBreath: '/assets/dragon/breath.png',
+  flyingDemon: '/assets/flying-demon/spritesheet.png',
+  hellHoundWalk: '/assets/hell-hound/walk.png',
+  castleBackground: '/assets/tileset/castle-background.png',
+  platformerTileset: '/assets/tileset/platformer-tileset.png',
+  itecLogo: '/assets/ui/itec-logo.png',
 };
 
-// Frame dimensions verified against the actual spritesheet files (see plan doc).
-const ANIMS = {
+// Frame dimensions verified against the actual spritesheet files (see CLAUDE.md).
+export const ANIMS = {
   playerIdle: { frameW: 128, frameH: 96, frameCount: 4, frameDuration: 120, loop: true },
   playerRun: { frameW: 128, frameH: 96, frameCount: 12, frameDuration: 80, loop: true },
   playerJump: { frameW: 128, frameH: 96, frameCount: 4, frameDuration: 100, loop: false },
@@ -28,7 +28,7 @@ const ANIMS = {
   hellHoundWalk: { frameW: 64, frameH: 48, frameCount: 12, frameDuration: 90, loop: true },
 };
 
-class Anim {
+export class Anim {
   constructor(def) {
     this.def = def;
     this.frameIndex = 0;
@@ -57,7 +57,7 @@ class Anim {
   }
 }
 
-function drawFrame(ctx, img, frameIndex, frameW, frameH, dx, dy, dw, dh, flipX) {
+export function drawFrame(ctx, img, frameIndex, frameW, frameH, dx, dy, dw, dh, flipX) {
   if (!img || !img.complete || img.naturalWidth === 0) return;
   if (flipX) {
     ctx.save();
@@ -73,33 +73,43 @@ function drawFrame(ctx, img, frameIndex, frameW, frameH, dx, dy, dw, dh, flipX) 
 // Draws a sprite frame with an optional white "hit flash" tinted through an
 // offscreen buffer, so the flash respects the sprite's own alpha silhouette
 // instead of bleeding into whatever's already drawn behind it on the canvas.
-const _flashCanvas = document.createElement('canvas');
-const _flashCtx = _flashCanvas.getContext('2d');
+// Created lazily (not at module top-level) since document isn't available
+// during server-side module evaluation in Next.js.
+let _flashCanvas = null;
+let _flashCtx = null;
+function getFlashCtx() {
+  if (!_flashCanvas) {
+    _flashCanvas = document.createElement('canvas');
+    _flashCtx = _flashCanvas.getContext('2d');
+  }
+  return _flashCtx;
+}
 
-function drawFrameWithFlash(ctx, img, frameIndex, frameW, frameH, dx, dy, dw, dh, flipX, flashAlpha) {
+export function drawFrameWithFlash(ctx, img, frameIndex, frameW, frameH, dx, dy, dw, dh, flipX, flashAlpha) {
   if (!flashAlpha || flashAlpha <= 0) {
     drawFrame(ctx, img, frameIndex, frameW, frameH, dx, dy, dw, dh, flipX);
     return;
   }
   if (!img || !img.complete || img.naturalWidth === 0) return;
+  const flashCtx = getFlashCtx();
   _flashCanvas.width = dw;
   _flashCanvas.height = dh;
-  _flashCtx.clearRect(0, 0, dw, dh);
-  _flashCtx.save();
+  flashCtx.clearRect(0, 0, dw, dh);
+  flashCtx.save();
   if (flipX) {
-    _flashCtx.translate(dw, 0);
-    _flashCtx.scale(-1, 1);
+    flashCtx.translate(dw, 0);
+    flashCtx.scale(-1, 1);
   }
-  _flashCtx.drawImage(img, frameIndex * frameW, 0, frameW, frameH, 0, 0, dw, dh);
-  _flashCtx.restore();
-  _flashCtx.globalCompositeOperation = 'source-atop';
-  _flashCtx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
-  _flashCtx.fillRect(0, 0, dw, dh);
-  _flashCtx.globalCompositeOperation = 'source-over';
+  flashCtx.drawImage(img, frameIndex * frameW, 0, frameW, frameH, 0, 0, dw, dh);
+  flashCtx.restore();
+  flashCtx.globalCompositeOperation = 'source-atop';
+  flashCtx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
+  flashCtx.fillRect(0, 0, dw, dh);
+  flashCtx.globalCompositeOperation = 'source-over';
   ctx.drawImage(_flashCanvas, dx, dy);
 }
 
-function loadImages(manifest, onDone) {
+export function loadImages(manifest, onDone) {
   const keys = Object.keys(manifest);
   let loaded = 0;
   keys.forEach(key => {
@@ -113,14 +123,14 @@ function loadImages(manifest, onDone) {
   });
 }
 
-function rollDamage() {
+export function rollDamage() {
   return 10 + Math.floor(Math.random() * 11); // 10-20 inclusive
 }
 
-function randRange(min, max) {
+export function randRange(min, max) {
   return min + Math.random() * (max - min);
 }
 
-function rectsOverlap(a, b) {
+export function rectsOverlap(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }

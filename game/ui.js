@@ -1,4 +1,10 @@
-class Button {
+import { IMAGES } from './assets';
+import { CANVAS_W, CANVAS_H } from './level';
+import { drawParticles } from './particles';
+import { MAX_HP } from './player';
+import { DRAGON_MAX_HP } from './dragon';
+
+export class Button {
   constructor(x, y, w, h, label) {
     this.x = x; this.y = y; this.w = w; this.h = h; this.label = label;
   }
@@ -32,13 +38,13 @@ class Button {
 }
 
 // Layout centered within the canvas (CANVAS_W from level.js): title -> button -> "Prepared By" -> logo.
-const playButton = new Button(CANVAS_W / 2 - 100, 175, 200, 56, 'PLAY GAME');
+export const playButton = new Button(CANVAS_W / 2 - 100, 175, 200, 56, 'PLAY GAME');
 const PAIR_BUTTON_LEFT_X = CANVAS_W / 2 - 220;
 const PAIR_BUTTON_RIGHT_X = CANVAS_W / 2 + 30;
-const victoryPlayAgainButton = new Button(PAIR_BUTTON_LEFT_X, 340, 190, 52, 'Play Again');
-const victoryMenuButton = new Button(PAIR_BUTTON_RIGHT_X, 340, 190, 52, 'Main Menu');
-const gameoverRetryButton = new Button(PAIR_BUTTON_LEFT_X, 340, 190, 52, 'Retry');
-const gameoverMenuButton = new Button(PAIR_BUTTON_RIGHT_X, 340, 190, 52, 'Main Menu');
+export const victoryPlayAgainButton = new Button(PAIR_BUTTON_LEFT_X, 340, 190, 52, 'Play Again');
+export const victoryMenuButton = new Button(PAIR_BUTTON_RIGHT_X, 340, 190, 52, 'Main Menu');
+export const gameoverRetryButton = new Button(PAIR_BUTTON_LEFT_X, 340, 190, 52, 'Retry');
+export const gameoverMenuButton = new Button(PAIR_BUTTON_RIGHT_X, 340, 190, 52, 'Main Menu');
 
 function drawTextOutlined(ctx, text, x, y, font, fillStyle, strokeStyle, lineWidth) {
   ctx.save();
@@ -71,7 +77,7 @@ function drawScreenBackground(ctx) {
   drawParticles(ctx);
 }
 
-function drawMenuScreen(ctx, mouse) {
+export function drawMenuScreen(ctx, mouse) {
   drawScreenBackground(ctx);
   drawTextOutlined(ctx, 'ITeC UNITAS Fair', CANVAS_W / 2, 110, 'bold 50px Georgia, "Times New Roman", serif', '#f1d27a', '#000', 6);
   playButton.draw(ctx, playButton.hitTest(mouse.x, mouse.y));
@@ -91,14 +97,14 @@ function drawMenuScreen(ctx, mouse) {
   }
 }
 
-function drawVictoryScreen(ctx, mouse) {
+export function drawVictoryScreen(ctx, mouse) {
   drawScreenBackground(ctx);
   drawTextOutlined(ctx, 'VICTORY!', CANVAS_W / 2, 220, 'bold 56px Georgia, serif', '#f1d27a', '#000', 6);
   victoryPlayAgainButton.draw(ctx, victoryPlayAgainButton.hitTest(mouse.x, mouse.y));
   victoryMenuButton.draw(ctx, victoryMenuButton.hitTest(mouse.x, mouse.y));
 }
 
-function drawGameOverScreen(ctx, mouse) {
+export function drawGameOverScreen(ctx, mouse) {
   drawScreenBackground(ctx);
   drawTextOutlined(ctx, 'GAME OVER', CANVAS_W / 2, 220, 'bold 56px Georgia, serif', '#e74c3c', '#000', 6);
   gameoverRetryButton.draw(ctx, gameoverRetryButton.hitTest(mouse.x, mouse.y));
@@ -141,7 +147,7 @@ function drawPotionIcon(ctx, x, y, filled) {
   ctx.restore();
 }
 
-function drawHUD(ctx, player, dragon) {
+export function drawHUD(ctx, player, dragon) {
   drawBar(ctx, 20, 20, 250, 24, player.hp / MAX_HP, `HP ${Math.ceil(Math.max(0, player.hp))}/${MAX_HP}`, '#c0392b');
   drawBar(ctx, CANVAS_W - 270, 20, 250, 24, dragon.hp / DRAGON_MAX_HP, `DRAGON ${Math.ceil(Math.max(0, dragon.hp))}/${DRAGON_MAX_HP}`, '#8e44ad');
   for (let i = 0; i < 3; i++) {
