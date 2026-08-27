@@ -1,5 +1,5 @@
 import { Anim, ANIMS, IMAGES, drawFrameWithFlash, randRange, rollDamage, rectsOverlap } from './assets';
-import { CANVAS_W, GROUND_TOP } from './level';
+import { CANVAS_W } from './level';
 
 export const DRAGON_MAX_HP = 100;
 const DRAGON_SCALE = 1.3; // independent of the global tile/character SCALE - this sprite has a lot of padding
@@ -11,11 +11,10 @@ const DRAGON_BREATH_X_OFFSET = -27.5; // the demon's body sits off-center within
 // right edge) rather than just bouncing within a small local slice.
 const DRAGON_MIN_X = 220;
 const DRAGON_MAX_X = 1160;
+const DRAGON_MIN_Y = 160;
+const DRAGON_MAX_Y = 320;
 
-const DRAGON_HOVER_Y = 250; // baseline center y while flying
-const DRAGON_BOB_AMPLITUDE = 10;
-const DRAGON_BOB_SPEED = 2.2;
-const DRAGON_PATROL_SPEED = 45; // px/s, only moves while IDLE
+const DRAGON_PATROL_SPEED = 150; // px/s, only moves while IDLE - bounces around in 2D (x and y), not just side to side
 const DRAGON_HB_W = 110;
 const DRAGON_HB_H = 110;
 const DRAGON_CONTACT_COOLDOWN = 700;
@@ -28,9 +27,10 @@ export class Dragon {
   constructor() {
     this.hp = DRAGON_MAX_HP;
     this.x = DRAGON_MAX_X - 60; // starts on the right side of the arena
+    this.y = (DRAGON_MIN_Y + DRAGON_MAX_Y) / 2;
     this.state = 'IDLE';
     this.stateTimer = 0;
-    this.idleDecisionTime = randRange(3000, 5000);
+    this.idleDecisionTime = randRange(1200, 2200);
     this.fireCooldown = 0;
     this.summonCooldown = 0;
     this.contactCooldown = 0;
@@ -38,17 +38,25 @@ export class Dragon {
     this.contactShakeTimer = 0;
     this.fireResolved = false;
     this.summonSpawned = false;
-    this.patrolDir = -1;
-    this.bobPhase = Math.random() * Math.PI * 2;
+    this.vx = 0;
+    this.vy = 0;
+    this.randomizeDirection();
     this.aoeZone = null;
     this.teleportTimer = 0;
     this.teleportMoved = false;
     this.pendingX = this.x;
+    this.pendingY = this.y;
     this.anims = { idle: new Anim(ANIMS.dragonIdle) };
   }
 
   get hurtbox() {
-    return { x: this.x - DRAGON_HB_W / 2, y: DRAGON_HOVER_Y - DRAGON_HB_H / 2, w: DRAGON_HB_W, h: DRAGON_HB_H };
+    return { x: this.x - DRAGON_HB_W / 2, y: this.y - DRAGON_HB_H / 2, w: DRAGON_HB_W, h: DRAGON_HB_H };
+  }
+
+  randomizeDirection() {
+    const angle = Math.random() * Math.PI * 2;
+    this.vx = Math.cos(angle) * DRAGON_PATROL_SPEED;
+    this.vy = Math.sin(angle) * DRAGON_PATROL_SPEED;
   }
 
   takeDamage(amount, playerX) {
@@ -77,12 +85,14 @@ export class Dragon {
     }
     nx = Math.max(DRAGON_MIN_X, Math.min(DRAGON_MAX_X, nx));
     this.pendingX = nx;
+    this.pendingY = randRange(DRAGON_MIN_Y, DRAGON_MAX_Y);
   }
 
   enterIdle() {
     this.state = 'IDLE';
     this.stateTimer = 0;
-    this.idleDecisionTime = randRange(3000, 5000);
+    this.idleDecisionTime = randRange(1200, 2200);
+    this.randomizeDirection();
   }
 
   decideAction() {
@@ -124,20 +134,23 @@ export class Dragon {
       this.teleportTimer -= dtMs;
       if (!this.teleportMoved && this.teleportTimer <= DRAGON_TELEPORT_DURATION / 2) {
         this.x = this.pendingX;
+        this.y = this.pendingY;
         this.teleportMoved = true;
-        this.patrolDir = Math.random() < 0.5 ? 1 : -1;
+        this.randomizeDirection();
       }
       if (this.teleportTimer < 0) this.teleportTimer = 0;
     }
 
     this.anims.idle.update(dt);
-    this.bobPhase += dt * DRAGON_BOB_SPEED;
     this.stateTimer += dtMs;
 
     if (this.state === 'IDLE') {
-      this.x += this.patrolDir * DRAGON_PATROL_SPEED * dt;
-      if (this.x >= DRAGON_MAX_X) { this.x = DRAGON_MAX_X; this.patrolDir = -1; }
-      if (this.x <= DRAGON_MIN_X) { this.x = DRAGON_MIN_X; this.patrolDir = 1; }
+      this.x += this.vx * dt;
+      this.y += this.vy * dt;
+      if (this.x >= DRAGON_MAX_X) { this.x = DRAGON_MAX_X; this.vx = -Math.abs(this.vx); }
+      if (this.x <= DRAGON_MIN_X) { this.x = DRAGON_MIN_X; this.vx = Math.abs(this.vx); }
+      if (this.y >= DRAGON_MAX_Y) { this.y = DRAGON_MAX_Y; this.vy = -Math.abs(this.vy); }
+      if (this.y <= DRAGON_MIN_Y) { this.y = DRAGON_MIN_Y; this.vy = Math.abs(this.vy); }
     }
 
     switch (this.state) {
@@ -161,7 +174,7 @@ export class Dragon {
           }
         }
         if (this.stateTimer >= 900) {
-          this.fireCooldown = 6000;
+          this.fireCooldown = 2800;
           this.state = 'RECOVER';
           this.stateTimer = 0;
         }
@@ -177,7 +190,7 @@ export class Dragon {
           spawnMonster();
         }
         if (this.stateTimer >= 400) {
-          this.summonCooldown = 8000;
+          this.summonCooldown = 3500;
           this.enterIdle();
         }
         break;
@@ -193,7 +206,6 @@ export class Dragon {
   }
 
   draw(ctx) {
-    const bob = Math.sin(this.bobPhase) * DRAGON_BOB_AMPLITUDE;
     let shakeX = 0;
     if (this.contactShakeTimer > 0) {
       shakeX = Math.sin(this.contactShakeTimer * 0.8) * 4;
@@ -204,7 +216,7 @@ export class Dragon {
     if (this.state === 'FIRE_TELEGRAPH') {
       // Soft pulsing glow near the mouth as a warning cue, instead of a hard AOE rectangle.
       const pulse = 0.35 + 0.35 * Math.sin(this.stateTimer / 60);
-      const gx = this.x - 90, gy = DRAGON_HOVER_Y + 30;
+      const gx = this.x - 90, gy = this.y + 30;
       const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, 90);
       grad.addColorStop(0, `rgba(90,220,230,${pulse})`);
       grad.addColorStop(1, 'rgba(90,220,230,0)');
@@ -239,8 +251,8 @@ export class Dragon {
 
     const dw = def.frameW * scale, dh = def.frameH * scale;
     const dx = this.x - dw / 2 + xOffset + shakeX;
-    const dy = DRAGON_HOVER_Y - dh / 2 + bob;
-    const flip = !attacking && this.patrolDir > 0;
+    const dy = this.y - dh / 2;
+    const flip = !attacking && this.vx > 0;
 
     let alpha = 1;
     if (this.teleportTimer > 0) {
