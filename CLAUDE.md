@@ -70,3 +70,13 @@ The ITeC logo (`ITeC Picture/iteclogowhite (1).png`, duplicated into `public/ass
 - `GROUND_TOP` (412) and the platform `top` values were tuned against the player's jump physics (`GRAVITY`, `JUMP_VELOCITY` in `player.js`) so that jumping clears both platforms with a small margin, and so a jump-attack from ground level can just barely reach the hovering dragon's hurtbox. Changing one without checking the other will likely break reachability.
 - No bundler config beyond Next's default — new sprites go in `public/assets/<thing>/`, get a root-absolute entry in `IMAGE_MANIFEST` (`game/assets.js`), and (if animated) a matching `ANIMS` frame definition.
 - This project deploys to Vercel with zero configuration (no `vercel.json` needed) — it's a standard Next.js app at the repo root.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
