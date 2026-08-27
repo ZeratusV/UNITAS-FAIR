@@ -54,7 +54,7 @@ export class Player {
     // swing whiff even though it visually looked adjacent. Reaches down
     // to the player's own feet level so low, ground-hugging targets are
     // reliably caught too.
-    const w = 100, h = 70;
+    const w = 150, h = 90;
     const x = this.x - w / 2;
     const y = this.y - h;
     return { x, y, w, h };

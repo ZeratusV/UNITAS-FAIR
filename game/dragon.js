@@ -17,6 +17,13 @@ const DRAGON_MAX_Y = 320;
 const DRAGON_PATROL_SPEED = 150; // px/s, only moves while IDLE - bounces around in 2D (x and y), not just side to side
 const DRAGON_HB_W = 110;
 const DRAGON_HB_H = 110;
+// The breath sprite is drawn at DRAGON_BREATH_SCALE (much bigger than idle),
+// so the hurtbox needs to grow to match while attacking - otherwise the
+// dragon visually looms right next to the player but the small idle-sized
+// hurtbox isn't actually there, and swings whiff on something that looks
+// clearly in range.
+const DRAGON_HB_ATTACK_W = 175;
+const DRAGON_HB_ATTACK_H = 175;
 const DRAGON_CONTACT_COOLDOWN = 700;
 const DRAGON_TELEPORT_DURATION = 240; // ms, blink-away triggered on every hit taken
 const DRAGON_TELEPORT_MIN_DISTANCE = 150;
@@ -51,7 +58,10 @@ export class Dragon {
   }
 
   get hurtbox() {
-    return { x: this.x - DRAGON_HB_W / 2, y: this.y - DRAGON_HB_H / 2, w: DRAGON_HB_W, h: DRAGON_HB_H };
+    const attacking = this.state === 'FIRE_TELEGRAPH' || this.state === 'FIRE_ACTIVE';
+    const w = attacking ? DRAGON_HB_ATTACK_W : DRAGON_HB_W;
+    const h = attacking ? DRAGON_HB_ATTACK_H : DRAGON_HB_H;
+    return { x: this.x - w / 2, y: this.y - h / 2, w, h };
   }
 
   randomizeDirection() {
@@ -192,7 +202,7 @@ export class Dragon {
           spawnMonster();
         }
         if (this.stateTimer >= 400) {
-          this.summonCooldown = 3500;
+          this.summonCooldown = 7000;
           this.enterIdle();
         }
         break;
