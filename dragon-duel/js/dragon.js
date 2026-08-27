@@ -13,6 +13,7 @@ const DRAGON_HB_H = 110;
 const DRAGON_CONTACT_COOLDOWN = 700;
 const DRAGON_TELEPORT_DURATION = 240; // ms, blink-away triggered on every hit taken
 const DRAGON_TELEPORT_MIN_DISTANCE = 150;
+const DRAGON_TELEPORT_JITTER = 40; // px, avoids teleporting to the exact same spot every time
 
 class Dragon {
   constructor() {
@@ -41,21 +42,30 @@ class Dragon {
     return { x: this.x - DRAGON_HB_W / 2, y: DRAGON_HOVER_Y - DRAGON_HB_H / 2, w: DRAGON_HB_W, h: DRAGON_HB_H };
   }
 
-  takeDamage(amount) {
+  takeDamage(amount, playerX) {
     if (this.hp <= 0) return;
     this.hp = Math.max(0, this.hp - amount);
     this.flashTimer = 100;
-    if (this.hp > 0) this.startTeleport();
+    if (this.hp > 0) this.startTeleport(playerX);
   }
 
-  startTeleport() {
+  startTeleport(playerX) {
     this.teleportTimer = DRAGON_TELEPORT_DURATION;
     this.teleportMoved = false;
-    let nx, tries = 0;
-    do {
-      nx = randRange(DRAGON_MIN_X, DRAGON_MAX_X);
-      tries++;
-    } while (Math.abs(nx - this.x) < DRAGON_TELEPORT_MIN_DISTANCE && tries < 10);
+    // Teleport to whichever end of the patrol range is farthest from the
+    // player (a point-to-interval distance is always maximized at an
+    // endpoint), with a little jitter so it's not the exact same spot
+    // every time. Falls back to the opposite end if that's too close to
+    // where the dragon already is (e.g. it's already sitting at that end).
+    const distToMin = Math.abs(DRAGON_MIN_X - playerX);
+    const distToMax = Math.abs(DRAGON_MAX_X - playerX);
+    let farEnd = distToMax >= distToMin ? DRAGON_MAX_X : DRAGON_MIN_X;
+    let nx = farEnd + (Math.random() - 0.5) * 2 * DRAGON_TELEPORT_JITTER;
+    if (Math.abs(nx - this.x) < DRAGON_TELEPORT_MIN_DISTANCE) {
+      farEnd = farEnd === DRAGON_MAX_X ? DRAGON_MIN_X : DRAGON_MAX_X;
+      nx = farEnd + (Math.random() - 0.5) * 2 * DRAGON_TELEPORT_JITTER;
+    }
+    nx = Math.max(DRAGON_MIN_X, Math.min(DRAGON_MAX_X, nx));
     this.pendingX = nx;
   }
 

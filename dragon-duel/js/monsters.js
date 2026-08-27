@@ -2,8 +2,8 @@ const MONSTER_MAX_HP = 20;
 const MONSTER_CONTACT_DAMAGE_MIN = 5;
 const MONSTER_CONTACT_COOLDOWN = 700;
 const MONSTER_DEATH_FADE_MS = 200;
-const MONSTER_KNOCKBACK_SPEED = 260;
-const MONSTER_KNOCKBACK_DURATION = 300; // ms - pushed away from the player after landing a hit, so it can't just sit clipped into them
+const MONSTER_KNOCKBACK_SPEED = 420;
+const MONSTER_KNOCKBACK_DURATION = 450; // ms - pushed away from the player after landing a hit, so it can't just sit clipped into them and the player gets a real window to land a counter-hit
 
 function monsterContactDamage() {
   return MONSTER_CONTACT_DAMAGE_MIN + Math.floor(Math.random() * 6); // 5-10

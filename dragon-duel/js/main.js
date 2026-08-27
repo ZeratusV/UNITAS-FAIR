@@ -93,7 +93,7 @@ function updatePlaying(dt) {
   const hb = player.attackHitbox;
   if (hb) {
     if (dragon.hp > 0 && !player.attackHitTargets.has(dragon) && rectsOverlap(hb, dragon.hurtbox)) {
-      dragon.takeDamage(rollDamage());
+      dragon.takeDamage(rollDamage(), player.x);
       player.attackHitTargets.add(dragon);
     }
     monsters.forEach(m => {
